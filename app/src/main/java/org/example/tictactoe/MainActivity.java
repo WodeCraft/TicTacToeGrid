@@ -113,7 +113,7 @@ public class MainActivity extends Activity implements OnClickListener {
 				StringBuilder sb = new StringBuilder();
 				sb.append("Game Over!");
 				sb.append(System.getProperty("line.separator"));
-				sb.append(turn == 1 ? "Cross won": "Circle won");
+				sb.append(turn == 1 ? "Cross won": "Nought won");
 				Toast gameEndedToast = Toast.makeText(context, sb.toString(), Toast.LENGTH_LONG);
 				gameEndedToast.setGravity(Gravity.CENTER, 0, 0);
 				gameEndedToast.show();
@@ -154,7 +154,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		 *
 		 * Win8: felt3 + felt5 + felt7
 		 */
-		BoardStatus winner = BoardStatus.Empty;
+		boolean winner = false;
 
 		for(int condition : winConditions.get(fieldId)) {
 			switch (condition) {
@@ -183,16 +183,27 @@ public class MainActivity extends Activity implements OnClickListener {
 					winner = checkRow(board.get(R.id.felt3), board.get(R.id.felt5), board.get(R.id.felt7));
 					break;
 			}
-			if (winner != BoardStatus.Empty) {
+			if (winner) {
 				return true;
 			}
 		}
 
 		return false;
+/*
+		return checkRow(board.get(R.id.felt1), board.get(R.id.felt2), board.get(R.id.felt3))
+				&& checkRow(board.get(R.id.felt4), board.get(R.id.felt5), board.get(R.id.felt6))
+				&& checkRow(board.get(R.id.felt7), board.get(R.id.felt8), board.get(R.id.felt9))
+				&& checkRow(board.get(R.id.felt1), board.get(R.id.felt4), board.get(R.id.felt7))
+				&& checkRow(board.get(R.id.felt2), board.get(R.id.felt5), board.get(R.id.felt8))
+				&& checkRow(board.get(R.id.felt3), board.get(R.id.felt6), board.get(R.id.felt9))
+				&& checkRow(board.get(R.id.felt1), board.get(R.id.felt5), board.get(R.id.felt9))
+				&& checkRow(board.get(R.id.felt3), board.get(R.id.felt5), board.get(R.id.felt7));
+*/
+
 	}
 
-	private BoardStatus checkRow(BoardStatus field1, BoardStatus field2, BoardStatus field3) {
-		return field1.equals(field2) && field1.equals(field3) ? field1 : BoardStatus.Empty;
+	private boolean checkRow(BoardStatus field1, BoardStatus field2, BoardStatus field3) {
+		return field1.equals(field2) && field1.equals(field3) && !field1.equals(BoardStatus.Empty);
 	}
 
 	private void setImage(ImageView image) {
@@ -201,7 +212,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			board.put(image.getId(), BoardStatus.Cross);
 		} else {
 			image.setImageResource(R.drawable.bolle);
-			board.put(image.getId(), BoardStatus.Circle);
+			board.put(image.getId(), BoardStatus.Nought);
 		}
 	}
 }

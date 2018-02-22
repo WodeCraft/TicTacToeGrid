@@ -10,4 +10,13 @@ public class AIPlayer {
 
     private BoardStatus mySeed;
     private BoardStatus opponentSeed;
+
+    public void setSeed(BoardStatus seed) {
+        mySeed = seed;
+        opponentSeed = mySeed == BoardStatus.Nought ? BoardStatus.Cross : BoardStatus.Nought;
+    }
+
+    public void move() {
+        // Decide on a place to move to
+    }
 }

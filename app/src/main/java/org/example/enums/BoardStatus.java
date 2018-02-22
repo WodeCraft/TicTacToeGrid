@@ -7,5 +7,5 @@ package org.example.enums;
 public enum BoardStatus {
     Empty,
     Cross,
-    Circle
+    Nought
 }
