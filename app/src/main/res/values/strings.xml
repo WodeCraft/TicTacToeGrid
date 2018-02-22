@@ -4,5 +4,9 @@
     <string name="app_name">TicTacToeGrid</string>
     <string name="hello_world">Welcome to TicTacToe!</string>
     <string name="action_settings">Settings</string>
+    <string name="new_game">New game</string>
+    <string name="illegal_move">You need to place a piece on an empty square. Try again.</string>
+    <string name="no_more_moves">Game finished! Start a new game to play again.</string>
+    <string name="game_over_win"></string>
 
 </resources>
