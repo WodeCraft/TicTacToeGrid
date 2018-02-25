@@ -3,6 +3,7 @@ package org.example.tictactoe;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -11,10 +12,14 @@ import android.view.View.OnClickListener;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import org.example.ai.RuleBasedAI;
+import org.example.entities.AIPlayer;
+import org.example.entities.AbstractPlayer;
+import org.example.entities.Board;
+import org.example.entities.HumanPlayer;
 import org.example.enums.BoardStatus;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.example.enums.EndCondition;
+import org.example.enums.FirstMove;
 
 // we implement the onClickListener - so this means there
 //will be an onClick method defined for ALL the views later
@@ -22,12 +27,17 @@ import java.util.Map;
 public class MainActivity extends Activity implements OnClickListener {
 
 	private boolean gameEnded = false;
+	private EndCondition endCondition = EndCondition.FULL_BOARD;
+
 	private int[] fieldIds = { R.id.felt1, R.id.felt2, R.id.felt3, R.id.felt4, R.id.felt5,
 			R.id.felt6, R.id.felt7, R.id.felt8, R.id.felt9};
-	private Map<Integer, int[]> winConditions = new HashMap<>();
-	private int turn = 0; // To keep track of which player has the next turn. 0=Cross
+    private AbstractPlayer activePlayer;
 	private int turnCounter = 0; // To keep track of how many pieces have been placed.
-	private Map<Integer, BoardStatus> board = new HashMap<>();
+
+    private AbstractPlayer playerOne;
+    private AbstractPlayer playerTwo;
+
+	private Board board;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -37,24 +47,47 @@ public class MainActivity extends Activity implements OnClickListener {
 		View table = findViewById(R.id.table);
 		table.setOnClickListener(this);
 
-		// Set the status for all board fields to Empty
+		board = new Board();
+		// Set the status for all board fields to EMPTY
 		for(int i : fieldIds) {
 			//we add clicklisteners, this, to all our fields
 			View field = findViewById(i);
 			field.setOnClickListener(this);
 
-			board.put(i, BoardStatus.Empty);
+			board.setSquareStatus(i, BoardStatus.EMPTY);
 		}
 
-		winConditions.put(R.id.felt1, new int[] {1, 4, 7});
-		winConditions.put(R.id.felt2, new int[] {1, 5});
-		winConditions.put(R.id.felt3, new int[] {1, 6, 8});
-		winConditions.put(R.id.felt4, new int[] {2, 4});
-		winConditions.put(R.id.felt5, new int[] {2, 5, 7, 8});
-		winConditions.put(R.id.felt6, new int[] {2, 6});
-		winConditions.put(R.id.felt7, new int[] {3, 4, 8});
-		winConditions.put(R.id.felt8, new int[] {3, 5});
-		winConditions.put(R.id.felt9, new int[] {3, 6, 7});
+        /**
+         * TODO
+         * Create settings for indicating AI players
+         * Create settings for specifying winning conditions
+         */
+//		playerOne = new AIPlayer(fieldIds, board);
+        playerOne = new HumanPlayer();
+//        playerOne.setAiAlgorithm(new RuleBasedAI());
+//		playerOne.setAiAlgorithm(new MinmaxAI());
+		playerOne.setSeed(BoardStatus.CROSS);
+//        ((AIPlayer)playerOne).centerFirstMove = FirstMove.EDGE;
+
+		playerTwo = new AIPlayer(fieldIds, board);
+//		playerTwo = new HumanPlayer();
+//		playerTwo.setAiAlgorithm(new MinmaxAI());
+        playerTwo.setAiAlgorithm(new RuleBasedAI());
+		playerTwo.setOppenent(playerOne);
+		playerTwo.setSeed(BoardStatus.NOUGHT);
+//        ((AIPlayer)playerTwo).centerFirstMove = FirstMove.CORNER;
+
+		playerOne.setOppenent(playerTwo);
+
+		activePlayer = playerOne;
+
+        Handler myHandler = new Handler();
+        myHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                startGame();
+            }
+        }, 500);
 	}
 
 	@Override
@@ -76,6 +109,10 @@ public class MainActivity extends Activity implements OnClickListener {
 		return super.onOptionsItemSelected(item);
 	}
 
+    /**
+     * This method will handle the click event when a human player is taking her turn.
+     * @param view
+     */
 	@Override
 	public void onClick(View view) {
 		// TODO Here you need to get the ID of the view 
@@ -83,136 +120,123 @@ public class MainActivity extends Activity implements OnClickListener {
 		// you need to first put a "X", then next time 
 		// put a "O" and also make sure that you cannot
 		// put a "O" or a "X" if there is already something.
-		Context context = getApplicationContext();
-		if (turnCounter >= 6 || gameEnded) {
-			Toast gameEnded = Toast.makeText(context, R.string.no_more_moves, Toast.LENGTH_LONG);
-			gameEnded.setGravity(Gravity.BOTTOM, 0, 0);
-			gameEnded.show();
-		} else {
-			ImageView image = (ImageView) view;
-			int imageId = image.getId();
-
-			System.out.println("field " + imageId + " pressed");
-			if (board.get(imageId).equals(BoardStatus.Empty)) {
-				setImage(image);
-
-				turn = turn == 1 ? 0 : 1;
-				turnCounter++;
-			} else {
-				Toast tryAgain = Toast.makeText(context, R.string.illegal_move, Toast.LENGTH_SHORT);
-				tryAgain.setGravity(Gravity.CENTER, 0, 0);
-				tryAgain.show();
-			}
-
-			// We need to figure out how the game ended.
-			// Both check the number of round played
-			// and if any player have 3 pieces in a row.
-			if (turnCounter >= 5 && checkWincondition(imageId)) {
-				// Somebody won! End the game!
-				gameEnded = true;
-				StringBuilder sb = new StringBuilder();
-				sb.append("Game Over!");
-				sb.append(System.getProperty("line.separator"));
-				sb.append(turn == 1 ? "Cross won": "Nought won");
-				Toast gameEndedToast = Toast.makeText(context, sb.toString(), Toast.LENGTH_LONG);
-				gameEndedToast.setGravity(Gravity.CENTER, 0, 0);
-				gameEndedToast.show();
-			} else if (turnCounter >= 6) {
-				gameEnded = true;
-				Toast gameEndedToast = Toast.makeText(context, R.string.no_more_moves, Toast.LENGTH_LONG);
-				gameEndedToast.setGravity(Gravity.BOTTOM, 0, 0);
-				gameEndedToast.show();
-			}
-		}
+        ImageView image = (ImageView) view;
+        performMove(image.getId());
 	}
+
+	public void performMove(int squareId) {
+        Context context = getApplicationContext();
+
+        if (gameOver()) {
+            gameEnded = true;
+            Toast gameEndedToast = Toast.makeText(context, R.string.no_more_moves, Toast.LENGTH_LONG);
+            gameEndedToast.setGravity(Gravity.BOTTOM, 0, 0);
+            gameEndedToast.show();
+        } else {
+            System.out.println("field " + squareId + " pressed");
+            if (board.checkSquareStatus(squareId).equals(BoardStatus.EMPTY)) {
+                setImage(squareId);
+
+                turnCounter++;
+                // We need to figure out how the game ended.
+                // Both check the number of round played
+                // and if any player have 3 pieces in a row.
+                if (turnCounter >= 5 && board.checkForWinCondition(activePlayer.getSeed())) {
+                    // Somebody won! End the game!
+                    gameEnded = true;
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Game Over!");
+                    sb.append(System.getProperty("line.separator"));
+                    sb.append(activePlayer.getSeed() + " won");
+                    Toast gameEndedToast = Toast.makeText(context, sb.toString(), Toast.LENGTH_LONG);
+                    gameEndedToast.setGravity(Gravity.CENTER, 0, 0);
+                    gameEndedToast.show();
+                } else if (gameOver()) {
+                    gameEnded = true;
+                    Toast gameEndedToast = Toast.makeText(context, R.string.no_more_moves, Toast.LENGTH_LONG);
+                    gameEndedToast.setGravity(Gravity.BOTTOM, 0, 0);
+                    gameEndedToast.show();
+                }
+                activePlayer = activePlayer == playerTwo ? playerOne : playerTwo;
+            } else {
+                if (activePlayer.getClass().equals(HumanPlayer.class)) {
+                    Toast tryAgain = Toast.makeText(context, R.string.illegal_move, Toast.LENGTH_SHORT);
+                    tryAgain.setGravity(Gravity.CENTER, 0, 0);
+                    tryAgain.show();
+                }
+            }
+        }
+
+        Handler myHandler = new Handler();
+        myHandler.postDelayed(new Runnable() {
+           @Override
+            public void run() {
+               if (!gameOver()) {
+                   nextMove();
+               }
+           }
+        }, 500);
+    }
 
 	public void onNewGameClicked(View view) {
 		gameEnded = false;
-		turn = 0;
+		activePlayer = playerOne;
 		turnCounter = 0;
-		// Set the status for all board fields to Empty
+		// Set the status for all board fields to EMPTY
 		for(int i : fieldIds) {
 			ImageView image = findViewById(i);
 			image.setImageResource(R.drawable.blank);
 
-			board.put(i, BoardStatus.Empty);
-		}
-	}
-
-	private boolean checkWincondition(int fieldId) {
-
-		/**
-		 * Win1: felt1 + felt2 + felt3
-		 * Win2: felt4 + felt5 + felt6
-		 * Win3: felt7 + felt8 + felt9
-		 *
-		 * Win4: felt1 + felt4 + felt7
-		 * Win5: felt2 + felt5 + felt8
-		 * Win6: felt3 + felt6 + felt9
-		 *
-		 * Win7: felt1 + felt5 + felt9
-		 *
-		 * Win8: felt3 + felt5 + felt7
-		 */
-		boolean winner = false;
-
-		for(int condition : winConditions.get(fieldId)) {
-			switch (condition) {
-				case 1:
-					winner = checkRow(board.get(R.id.felt1), board.get(R.id.felt2), board.get(R.id.felt3));
-					break;
-				case 2:
-					winner = checkRow(board.get(R.id.felt4), board.get(R.id.felt5), board.get(R.id.felt6));
-					break;
-				case 3:
-					winner = checkRow(board.get(R.id.felt7), board.get(R.id.felt8), board.get(R.id.felt9));
-					break;
-				case 4:
-					winner = checkRow(board.get(R.id.felt1), board.get(R.id.felt4), board.get(R.id.felt7));
-					break;
-				case 5:
-					winner = checkRow(board.get(R.id.felt2), board.get(R.id.felt5), board.get(R.id.felt8));
-					break;
-				case 6:
-					winner = checkRow(board.get(R.id.felt3), board.get(R.id.felt6), board.get(R.id.felt9));
-					break;
-				case 7:
-					winner = checkRow(board.get(R.id.felt1), board.get(R.id.felt5), board.get(R.id.felt9));
-					break;
-				case 8:
-					winner = checkRow(board.get(R.id.felt3), board.get(R.id.felt5), board.get(R.id.felt7));
-					break;
-			}
-			if (winner) {
-				return true;
-			}
+			board.setSquareStatus(i, BoardStatus.EMPTY);
 		}
 
-		return false;
-/*
-		return checkRow(board.get(R.id.felt1), board.get(R.id.felt2), board.get(R.id.felt3))
-				&& checkRow(board.get(R.id.felt4), board.get(R.id.felt5), board.get(R.id.felt6))
-				&& checkRow(board.get(R.id.felt7), board.get(R.id.felt8), board.get(R.id.felt9))
-				&& checkRow(board.get(R.id.felt1), board.get(R.id.felt4), board.get(R.id.felt7))
-				&& checkRow(board.get(R.id.felt2), board.get(R.id.felt5), board.get(R.id.felt8))
-				&& checkRow(board.get(R.id.felt3), board.get(R.id.felt6), board.get(R.id.felt9))
-				&& checkRow(board.get(R.id.felt1), board.get(R.id.felt5), board.get(R.id.felt9))
-				&& checkRow(board.get(R.id.felt3), board.get(R.id.felt5), board.get(R.id.felt7));
-*/
-
+        Handler myHandler = new Handler();
+        myHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                startGame();
+            }
+        }, 500);
 	}
 
-	private boolean checkRow(BoardStatus field1, BoardStatus field2, BoardStatus field3) {
-		return field1.equals(field2) && field1.equals(field3) && !field1.equals(BoardStatus.Empty);
+	private void startGame() {
+	    if (activePlayer.getClass().equals(AIPlayer.class)) {
+	        nextMove();
+        }
+    }
+
+    private void nextMove() {
+        // If the active player is an AI, then ask it to make a takeTurn!
+        if (activePlayer.getClass().equals(AIPlayer.class)) {
+            activePlayer.takeTurn(this);
+        }
+    }
+
+	private void setImage(int imageId) {
+	    ImageView image = findViewById(imageId);
+	    if (activePlayer.getSeed().equals(BoardStatus.CROSS)) {
+            image.setImageResource(R.drawable.kryds);
+        } else {
+            image.setImageResource(R.drawable.bolle);
+        }
+        board.setSquareStatus(image.getId(), activePlayer.getSeed());
 	}
 
-	private void setImage(ImageView image) {
-		if (turn == 0) {
-			image.setImageResource(R.drawable.kryds);
-			board.put(image.getId(), BoardStatus.Cross);
-		} else {
-			image.setImageResource(R.drawable.bolle);
-			board.put(image.getId(), BoardStatus.Nought);
-		}
-	}
+	private boolean gameOver() {
+	    boolean retValue = false;
+
+	    switch(endCondition) {
+            case FULL_BOARD:
+                retValue = board.getAllEmptySquares().size() == 0 || gameEnded;
+                break;
+            case INFINITY:
+                retValue = gameEnded;
+                break;
+            case SIX_PIECE:
+                retValue = turnCounter >= 6 || gameEnded;
+                break;
+        }
+
+        return retValue;
+    }
 }
