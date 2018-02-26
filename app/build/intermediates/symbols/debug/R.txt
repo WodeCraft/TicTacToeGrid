@@ -148,3 +148,4 @@ int[] styleable FontFamilyFont { 0x7f010000, 0x7f010007, 0x7f010008 }
 int styleable FontFamilyFont_font 0
 int styleable FontFamilyFont_fontStyle 1
 int styleable FontFamilyFont_fontWeight 2
+int xml preferences 0x7f0d0000

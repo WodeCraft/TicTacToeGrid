@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="switch_preference_1"
+        android:switchTextOff="Computer"
+        android:switchTextOn="Human"
+        android:title="Player one" />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="switch_preference_2"
+        android:switchTextOff="Computer"
+        android:switchTextOn="Human"
+        android:title="Player two" />
+</PreferenceScreen>

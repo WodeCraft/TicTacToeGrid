@@ -24,6 +24,14 @@ import org.example.enums.FirstMove;
 // we implement the onClickListener - so this means there
 //will be an onClick method defined for ALL the views later
 //in the onClick method
+
+/**
+ * TODO:
+ *  - Storing stete to handle rotation shifts
+ *  - Implementing settings menu for letting the user select and change settings
+ *  - Create settings for indicating AI players
+ *  - Create settings for specifying winning conditions
+ */
 public class MainActivity extends Activity implements OnClickListener {
 
 	private boolean gameEnded = false;
@@ -57,11 +65,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			board.setSquareStatus(i, BoardStatus.EMPTY);
 		}
 
-        /**
-         * TODO
-         * Create settings for indicating AI players
-         * Create settings for specifying winning conditions
-         */
+		// Player one
 //		playerOne = new AIPlayer(fieldIds, board);
         playerOne = new HumanPlayer();
 //        playerOne.setAiAlgorithm(new RuleBasedAI());
@@ -69,23 +73,27 @@ public class MainActivity extends Activity implements OnClickListener {
 		playerOne.setSeed(BoardStatus.CROSS);
 //        ((AIPlayer)playerOne).centerFirstMove = FirstMove.EDGE;
 
+        // Player two
 		playerTwo = new AIPlayer(fieldIds, board);
 //		playerTwo = new HumanPlayer();
 //		playerTwo.setAiAlgorithm(new MinmaxAI());
         playerTwo.setAiAlgorithm(new RuleBasedAI());
 		playerTwo.setOppenent(playerOne);
 		playerTwo.setSeed(BoardStatus.NOUGHT);
-//        ((AIPlayer)playerTwo).centerFirstMove = FirstMove.CORNER;
+//        ((AIPlayer)playerTwo).centerFirstMove = FirstMove.EDGE;
 
 		playerOne.setOppenent(playerTwo);
 
+		// Active player will always be player one from the start of the game
 		activePlayer = playerOne;
 
+		// Adding a delay to make sure the game board is shown before the first move is done.
+        // This is primarily if player one is an AI player.
         Handler myHandler = new Handler();
         myHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                startGame();
+                nextMove();
             }
         }, 500);
 	}
@@ -124,6 +132,11 @@ public class MainActivity extends Activity implements OnClickListener {
         performMove(image.getId());
 	}
 
+    /**
+     * Method for performing the actual move on the board and displaying the visuals.
+     * The method will check for game overs and if the move is an illegal move.
+     * @param squareId
+     */
 	public void performMove(int squareId) {
         Context context = getApplicationContext();
 
@@ -178,6 +191,10 @@ public class MainActivity extends Activity implements OnClickListener {
         }, 500);
     }
 
+    /**
+     * Eventhandler for clicking the button to start a new game
+     * @param view
+     */
 	public void onNewGameClicked(View view) {
 		gameEnded = false;
 		activePlayer = playerOne;
@@ -194,17 +211,15 @@ public class MainActivity extends Activity implements OnClickListener {
         myHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                startGame();
+                nextMove();
             }
         }, 500);
 	}
 
-	private void startGame() {
-	    if (activePlayer.getClass().equals(AIPlayer.class)) {
-	        nextMove();
-        }
-    }
-
+    /**
+     * Method that will call the AI player to ask for the next move, or if the active player is a
+     * human player, the game will await the move.
+     */
     private void nextMove() {
         // If the active player is an AI, then ask it to make a takeTurn!
         if (activePlayer.getClass().equals(AIPlayer.class)) {
@@ -212,8 +227,12 @@ public class MainActivity extends Activity implements OnClickListener {
         }
     }
 
-	private void setImage(int imageId) {
-	    ImageView image = findViewById(imageId);
+    /**
+     * This method will place the correct image on the square specified by the parameter.
+     * @param squareId
+     */
+	private void setImage(int squareId) {
+	    ImageView image = findViewById(squareId);
 	    if (activePlayer.getSeed().equals(BoardStatus.CROSS)) {
             image.setImageResource(R.drawable.kryds);
         } else {
@@ -222,6 +241,10 @@ public class MainActivity extends Activity implements OnClickListener {
         board.setSquareStatus(image.getId(), activePlayer.getSeed());
 	}
 
+    /**
+     * Method for validating whether a game over state has been achieved.
+     * @return
+     */
 	private boolean gameOver() {
 	    boolean retValue = false;
 
