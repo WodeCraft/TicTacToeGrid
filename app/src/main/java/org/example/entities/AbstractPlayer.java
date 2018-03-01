@@ -4,12 +4,14 @@ import org.example.ai.IBaseAI;
 import org.example.enums.BoardStatus;
 import org.example.tictactoe.MainActivity;
 
+import java.io.Serializable;
+
 /**
  * Abstract class for implementing players for a game of Tic-Tac-Toe.
  * Created by Jens Christian Rasch on 23-02-2018.
  */
 
-public abstract class AbstractPlayer {
+public abstract class AbstractPlayer implements Serializable {
 
     protected BoardStatus mySeed;
     protected AbstractPlayer opponent;

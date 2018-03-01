@@ -12,6 +12,7 @@ import android.view.View.OnClickListener;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import org.example.ai.MinmaxAI;
 import org.example.ai.RuleBasedAI;
 import org.example.entities.AIPlayer;
 import org.example.entities.AbstractPlayer;
@@ -51,6 +52,12 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+		Board savedBoard = null;
+		if (savedInstanceState != null)
+        {
+            savedBoard = (Board) savedInstanceState.get("board");
+        }
 
 		View table = findViewById(R.id.table);
 		table.setOnClickListener(this);
@@ -131,6 +138,15 @@ public class MainActivity extends Activity implements OnClickListener {
         ImageView image = (ImageView) view;
         performMove(image.getId());
 	}
+
+	@Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+	    savedInstanceState.putSerializable("board", board);
+	    savedInstanceState.putSerializable("activePlayer", activePlayer);
+        savedInstanceState.putSerializable("playerOne", playerOne);
+        savedInstanceState.putSerializable("playerTwo", playerTwo);
+	    savedInstanceState.putInt("turnCounter", turnCounter);
+    }
 
     /**
      * Method for performing the actual move on the board and displaying the visuals.

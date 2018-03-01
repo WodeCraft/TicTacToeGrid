@@ -3,6 +3,7 @@ package org.example.entities;
 import org.example.enums.BoardStatus;
 import org.example.tictactoe.R;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.Random;
  * Created by Jens Christian Rasch on 23-02-2018.
  */
 
-public class Board {
+public class Board implements Serializable {
 
     private Map<Integer, BoardStatus> board = new HashMap<>();
 
